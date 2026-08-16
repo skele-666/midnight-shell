@@ -32,36 +32,40 @@
   m3shapes,
   debug ? false,
   withCli ? false,
-  extraRuntimeDeps ? [],
-}: let
+  extraRuntimeDeps ? [ ],
+}:
+let
   version = "1.0.0";
 
-  qs = quickshell.withModules [qt6.qtimageformats];
+  qs = quickshell.withModules [
+    qt6.qtimageformats
+    qt6.qtmultimedia
+  ];
 
-  runtimeDeps =
-    [
-      fish
-      ddcutil
-      brightnessctl
-      networkmanager
-      lm_sensors
-      swappy
-      wl-clipboard
-      libqalculate
-      bash
-      hyprland
-    ]
-    ++ extraRuntimeDeps
-    ++ lib.optional withCli caelestia-cli;
+  runtimeDeps = [
+    fish
+    ddcutil
+    brightnessctl
+    networkmanager
+    lm_sensors
+    swappy
+    wl-clipboard
+    libqalculate
+    bash
+    hyprland
+  ]
+  ++ extraRuntimeDeps
+  ++ lib.optional withCli caelestia-cli;
 
   fontconfig = makeFontsConf {
-    fontDirectories = [material-symbols rubik nerd-fonts.caskaydia-cove];
+    fontDirectories = [
+      material-symbols
+      rubik
+      nerd-fonts.caskaydia-cove
+    ];
   };
 
-  cmakeBuildType =
-    if debug
-    then "Debug"
-    else "RelWithDebInfo";
+  cmakeBuildType = if debug then "Debug" else "RelWithDebInfo";
 
   cmakeVersionFlags = [
     (lib.cmakeFeature "VERSION" version)
@@ -80,14 +84,16 @@
       fileset = lib.fileset.union ./../CMakeLists.txt ./../extras;
     };
 
-    nativeBuildInputs = [cmake ninja];
+    nativeBuildInputs = [
+      cmake
+      ninja
+    ];
 
-    cmakeFlags =
-      [
-        (lib.cmakeFeature "ENABLE_MODULES" "extras")
-        (lib.cmakeFeature "INSTALL_LIBDIR" "${placeholder "out"}/lib")
-      ]
-      ++ cmakeVersionFlags;
+    cmakeFlags = [
+      (lib.cmakeFeature "ENABLE_MODULES" "extras")
+      (lib.cmakeFeature "INSTALL_LIBDIR" "${placeholder "out"}/lib")
+    ]
+    ++ cmakeVersionFlags;
   };
 
   plugin = stdenv.mkDerivation {
@@ -98,16 +104,30 @@
       fileset = lib.fileset.union ./../CMakeLists.txt ./../plugin;
     };
 
-    nativeBuildInputs = [cmake ninja pkg-config];
-    buildInputs = [qt6.qtbase qt6.qtdeclarative qt6.qtshadertools libqalculate pipewire aubio libcava fftw lm_sensors protobuf];
+    nativeBuildInputs = [
+      cmake
+      ninja
+      pkg-config
+    ];
+    buildInputs = [
+      qt6.qtbase
+      qt6.qtdeclarative
+      qt6.qtshadertools
+      libqalculate
+      pipewire
+      aubio
+      libcava
+      fftw
+      lm_sensors
+      protobuf
+    ];
 
     dontWrapQtApps = true;
-    cmakeFlags =
-      [
-        (lib.cmakeFeature "ENABLE_MODULES" "plugin")
-        (lib.cmakeFeature "INSTALL_QMLDIR" qt6.qtbase.qtQmlPrefix)
-      ]
-      ++ cmakeVersionFlags;
+    cmakeFlags = [
+      (lib.cmakeFeature "ENABLE_MODULES" "plugin")
+      (lib.cmakeFeature "INSTALL_QMLDIR" qt6.qtbase.qtQmlPrefix)
+    ]
+    ++ cmakeVersionFlags;
   };
 
   m3shapesModule = stdenv.mkDerivation {
@@ -118,64 +138,85 @@
       fileset = ./../CMakeLists.txt;
     };
 
-    nativeBuildInputs = [cmake ninja];
-    buildInputs = [qt6.qtbase qt6.qtdeclarative];
+    nativeBuildInputs = [
+      cmake
+      ninja
+    ];
+    buildInputs = [
+      qt6.qtbase
+      qt6.qtdeclarative
+    ];
 
     dontWrapQtApps = true;
-    cmakeFlags =
-      [
-        (lib.cmakeFeature "ENABLE_MODULES" "m3shapes")
-        (lib.cmakeFeature "INSTALL_QMLDIR" qt6.qtbase.qtQmlPrefix)
-        m3shapesFlag
-      ]
-      ++ cmakeVersionFlags;
+    cmakeFlags = [
+      (lib.cmakeFeature "ENABLE_MODULES" "m3shapes")
+      (lib.cmakeFeature "INSTALL_QMLDIR" qt6.qtbase.qtQmlPrefix)
+      m3shapesFlag
+    ]
+    ++ cmakeVersionFlags;
   };
 in
-  stdenv.mkDerivation {
-    inherit version cmakeBuildType;
-    pname = "caelestia-shell${lib.optionalString debug "-debug"}";
-    src = ./..;
+stdenv.mkDerivation {
+  inherit version cmakeBuildType;
+  pname = "caelestia-shell${lib.optionalString debug "-debug"}";
+  src = ./..;
 
-    nativeBuildInputs = [cmake ninja makeWrapper qt6.wrapQtAppsHook];
-    buildInputs = [qs extras plugin m3shapesModule xkeyboard-config qt6.qtbase];
-    propagatedBuildInputs = runtimeDeps;
+  nativeBuildInputs = [
+    cmake
+    ninja
+    makeWrapper
+    qt6.wrapQtAppsHook
+  ];
+  buildInputs = [
+    qs
+    extras
+    plugin
+    m3shapesModule
+    xkeyboard-config
+    qt6.qtbase
+  ];
+  propagatedBuildInputs = runtimeDeps;
 
-    cmakeFlags =
-      [
-        (lib.cmakeFeature "ENABLE_MODULES" "shell")
-        (lib.cmakeFeature "INSTALL_QSCONFDIR" "${placeholder "out"}/share/caelestia-shell")
-      ]
-      ++ cmakeVersionFlags;
+  cmakeFlags = [
+    (lib.cmakeFeature "ENABLE_MODULES" "shell")
+    (lib.cmakeFeature "INSTALL_QSCONFDIR" "${placeholder "out"}/share/caelestia-shell")
+  ]
+  ++ cmakeVersionFlags;
 
-    dontStrip = debug;
+  dontStrip = debug;
 
-    prePatch = ''
-      substituteInPlace assets/pam.d/fprint \
-        --replace-fail pam_fprintd.so /run/current-system/sw/lib/security/pam_fprintd.so
-      substituteInPlace assets/pam.d/howdy \
-        --replace-fail pam_howdy.so /run/current-system/sw/lib/security/pam_howdy.so
-    '';
+  prePatch = ''
+    substituteInPlace assets/pam.d/fprint \
+      --replace-fail pam_fprintd.so /run/current-system/sw/lib/security/pam_fprintd.so
+    substituteInPlace assets/pam.d/howdy \
+      --replace-fail pam_howdy.so /run/current-system/sw/lib/security/pam_howdy.so
 
-    postInstall = ''
-      makeWrapper ${qs}/bin/qs $out/bin/caelestia-shell \
-      	--prefix PATH : "${lib.makeBinPath runtimeDeps}" \
-      	--set FONTCONFIG_FILE "${fontconfig}" \
-      	--set CAELESTIA_LIB_DIR ${extras}/lib \
-        --set CAELESTIA_XKB_RULES_PATH ${xkeyboard-config}/share/xkeyboard-config-2/rules/base.lst \
-      	--add-flags "-p $out/share/caelestia-shell"
+    substituteInPlace modules/launcher/services/Emojis.qml \
+    --replace-fail \
+      "/usr/lib/python3.14/site-packages/caelestia/data/emojis.txt" \
+      "${caelestia-cli}/lib/python3.14/site-packages/caelestia/data/emojis.txt"
+  '';
 
-      mkdir -p $out/lib
-      ln -s ${extras}/lib/* $out/lib/
-    '';
+  postInstall = ''
+    makeWrapper ${qs}/bin/qs $out/bin/caelestia-shell \
+    	--prefix PATH : "${lib.makeBinPath runtimeDeps}" \
+    	--set FONTCONFIG_FILE "${fontconfig}" \
+    	--set CAELESTIA_LIB_DIR ${extras}/lib \
+      --set CAELESTIA_XKB_RULES_PATH ${xkeyboard-config}/share/xkeyboard-config-2/rules/base.lst \
+    	--add-flags "-p $out/share/caelestia-shell"
 
-    passthru = {
-      inherit plugin extras m3shapesModule;
-    };
+    mkdir -p $out/lib
+    ln -s ${extras}/lib/* $out/lib/
+  '';
 
-    meta = {
-      description = "A fluid, morphing shell for your Linux desktop";
-      homepage = "https://github.com/caelestia-dots/shell";
-      license = lib.licenses.gpl3Only;
-      mainProgram = "caelestia-shell";
-    };
-  }
+  passthru = {
+    inherit plugin extras m3shapesModule;
+  };
+
+  meta = {
+    description = "A fluid, morphing shell for your Linux desktop";
+    homepage = "https://github.com/caelestia-dots/shell";
+    license = lib.licenses.gpl3Only;
+    mainProgram = "caelestia-shell";
+  };
+}
