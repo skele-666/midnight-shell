@@ -8,16 +8,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1786674943,
-        "narHash": "sha256-UwVo4emt9+GDslfabJfCkfO1uOqdhLroqByMEd9RpGk=",
-        "owner": "caelestia-dots",
-        "repo": "cli",
-        "rev": "9857e1a5c4dad637a6220fa4290026559ba86c18",
+        "lastModified": 1787531319,
+        "narHash": "sha256-Gd1qfRnS1o1PCXwDbbD2h4L1nUfPnr3Kx+vUU/w/FIY=",
+        "owner": "dim-ghub",
+        "repo": "caelestia-cli",
+        "rev": "5b102986b83a14e8d94302aca29aeec4f74416bf",
         "type": "github"
       },
       "original": {
-        "owner": "caelestia-dots",
-        "repo": "cli",
+        "owner": "dim-ghub",
+        "repo": "caelestia-cli",
         "type": "github"
       }
     },
